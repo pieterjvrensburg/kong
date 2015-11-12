@@ -1,6 +1,7 @@
 local iputils = require "resty.iputils" 
 local responses = require "kong.tools.responses"
 local utils = require "kong.tools.utils"
+local apievent = require "kong.plugins.apiman.event"
 
 local _M = {}
 
@@ -22,6 +23,10 @@ function _M.execute(conf)
   end
 
   if block then
+    -- Log event
+    local event = { event_type = "ip_restriction" }
+    apievent.submit(conf, event)
+    
     ngx.ctx.stop_phases = true -- interrupt other phases of this request
     return responses.send_HTTP_FORBIDDEN("Your IP address is not allowed")
   end

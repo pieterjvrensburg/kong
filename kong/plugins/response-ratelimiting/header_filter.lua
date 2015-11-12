@@ -2,6 +2,7 @@ local stringy = require "stringy"
 local utils = require "kong.tools.utils"
 local constants = require "kong.constants"
 local responses = require "kong.tools.responses"
+local apievent = require "kong.plugins.apiman.event"
 
 local _M = {}
 
@@ -32,6 +33,7 @@ function _M.execute(conf)
   ngx.ctx.increments = increments
 
   local usage = ngx.ctx.usage -- Load current usage
+  local limit_details = {}
 
   local stop
   for limit_name, v in pairs(usage) do
@@ -41,6 +43,8 @@ function _M.execute(conf)
 
       if increments[limit_name] and increments[limit_name] > 0 and lv.remaining <= 0 then
         stop = true -- No more
+
+        limit_details = { limit_name = limit_name, period_name = period_name, limit = lv.limit }
       end
     end
   end
@@ -50,6 +54,10 @@ function _M.execute(conf)
 
   -- If limit is exceeded, terminate the request
   if stop then
+    -- Log event
+    local event = { event_type = "rate_limiting", limit_details = limit_details }
+    apievent.submit(conf, event)
+
     ngx.ctx.stop_log = true
     return responses.send(429) -- Don't set a body
   end

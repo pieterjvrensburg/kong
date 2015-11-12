@@ -4,6 +4,8 @@ local cache = require "kong.tools.database_cache"
 local responses = require "kong.tools.responses"
 local constants = require "kong.constants"
 local timestamp = require "kong.tools.timestamp"
+local cjson = require "cjson"
+local apievent = require "kong.plugins.apiman.event"
 
 local _M = {}
 
@@ -293,6 +295,10 @@ local function issue_token(conf)
 
   -- Adding the state if it exists. If the state == nil then it won't be added
   response_params.state = state
+
+  -- Log event
+  local event = { event_type = "issue_token", token_type = response_params["token_type"], access_token = response_params["access_token"] }
+  apievent.submit(conf, event)
 
   -- Stopping other phases
   ngx.ctx.stop_phases = true
