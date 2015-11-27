@@ -6,8 +6,8 @@ local utils = require "kong.tools.utils"
 local cache = require "kong.tools.database_cache"
 
 local APIMAN_DETAILS = {
-  host = apiman.event.com,
-  port = 80,
+  host = "apiman.event.com",
+  port = "80",
   path = "/apiman/api/v1/event",
   events = { "issue_token", "rate_limiting", "ip_restriction" }
 }
